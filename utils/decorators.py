@@ -1,17 +1,28 @@
 from functools import wraps
 
 
-def role_required(*allowed_roles):
-    def decorator(function):
-        @wraps(function)
-        def wrapper(current_user, *args, **kwargs):
-            if current_user.role not in allowed_roles:
-                raise PermissionError(
-                    "You do not have permission to perform this action."
-                )
+def login_required(function):
+    @wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if self.current_user is None:
+            print("Please login first.")
+            return None
+        return function(self, *args, **kwargs)
 
-            return function(current_user, *args, **kwargs)
+    return wrapper
 
-        return wrapper
 
-    return decorator
+def admin_required(function):
+    @wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if self.current_user is None:
+            print("Please login first.")
+            return None
+
+        if self.current_user.role != "admin":
+            print("Admin access required.")
+            return None
+
+        return function(self, *args, **kwargs)
+
+    return wrapper
