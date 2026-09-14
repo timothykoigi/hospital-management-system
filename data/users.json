@@ -1,1 +1,39 @@
-[]
+[
+    {
+        "user_id": "D1",
+        "name": "Dr. Alice Smith",
+        "username": "asmith",
+        "password": "$2b$12$nCLGxuNXveIG.QJYb9269utai8XYOoKjjWc3Yq7exZmPoJPClKwXm",
+        "role": "doctor",
+        "speciality": "Cardiology"
+    },
+    {
+        "user_id": "D2",
+        "name": "Dr. Ben Otieno",
+        "username": "botieno",
+        "password": "$2b$12$Qe3R8ew//SPFoQIvD0W/FeE/FUsdcMgUgRdp.hDdLPfxqi9i0SNeO",
+        "role": "doctor",
+        "speciality": "Dentistry"
+    },
+    {
+        "user_id": "P1",
+        "name": "Jane Doe",
+        "username": "jdoe",
+        "password": "$2b$12$kWdqo7Ycm8fCqOD0etI9suF1GSnKdXt5FEvzuPh7LrENYzNJGN7bq",
+        "role": "patient"
+    },
+    {
+        "user_id": "A1",
+        "name": "System Admin",
+        "username": "admin",
+        "password": "$2b$12$aYJGSlsDk3CDyr9ZrGKYDuWOEqGRLjQiRHPvmozQwxCTUBN2wGDZe",
+        "role": "admin"
+    },
+    {
+        "user_id": "P2",
+        "name": "james",
+        "username": "1234",
+        "password": "$2b$12$vn74i2Y9LSdEc/UhZas1p.AKu.TBokgMA/BMpJ36Dlza1cmkmiDMa",
+        "role": "patient"
+    }
+]
