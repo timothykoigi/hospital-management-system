@@ -1,6 +1,7 @@
+"""
+user.py
 
-
-"""This file handles everything about users:
+This file handles everything about users:
 - User is the base class (shared by every kind of account)
 - Patient, Doctor, and Admin all inherit from User (this is our
   "inheritance" requirement)
@@ -138,30 +139,23 @@ class UserManager:
         if os.path.exists(self._filename):
             with open(self._filename, "r") as file:
                 data = json.load(file)
-
-            if isinstance(data, dict):
-                items = []
-                for key in ("admins", "doctors", "patients"):
-                    items.extend(data.get(key, []))
-            else:
-                items = data
-
-            for item in items:
-                self._users.append(self._deserialize_user(item))
+                for item in data:
+                    if item["role"] == "doctor":
+                        user = Doctor(
+                            item["user_id"], item["name"], item["username"],
+                            item["password"], item["speciality"],
+                        )
+                    elif item["role"] == "admin":
+                        user = Admin(item["user_id"], item["name"], item["username"], item["password"])
+                    else:
+                        user = Patient(item["user_id"], item["name"], item["username"], item["password"])
+                    self._users.append(user)
 
     def _save(self):
-        """Writes all users to the JSON file in the project's role-based structure."""
-        grouped = {"admins": [], "doctors": [], "patients": []}
-        for user in self._users:
-            role_key = {
-                "admin": "admins",
-                "doctor": "doctors",
-                "patient": "patients",
-            }.get(user.get_role(), "patients")
-            grouped[role_key].append(user.to_dict())
-
+        """Writes all users to the JSON file."""
         with open(self._filename, "w") as file:
-            json.dump(grouped, file, indent=4)
+            data = [user.to_dict() for user in self._users]
+            json.dump(data, file, indent=4)
 
     def _generate_id(self, role):
         """Creates a new user ID like P1, D1, A1 depending on the role."""
