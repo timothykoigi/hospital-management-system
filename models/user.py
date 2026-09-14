@@ -1,14 +1,3 @@
-"""
-user.py
-
-This file handles everything about users:
-- User is the base class (shared by every kind of account)
-- Patient, Doctor, and Admin all inherit from User (this is our
-  "inheritance" requirement)
-- UserManager keeps track of all users, saves/loads them from a JSON
-  file, and handles registration and login (this is our "user
-  authentication system" requirement)
-"""
 
 import json
 import os
