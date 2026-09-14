@@ -1,260 +1,479 @@
-
+```python
 from models.appointment import AppointmentManager
 from models.user import UserManager
-from utils.auth import login, register
-from utils.decorators import role_required
+from utils.decorators import login_required, admin_required
 
 
 def list_users_by_role(manager, role):
-    return [user for user in getattr(manager, "_users", []) if user.get_role() == role]
+    return [
+        user
+        for user in manager._users
+        if user.get_role() == role
+    ]
 
 
 def remove_user_by_username(manager, username, role=None):
-    users = list(getattr(manager, "_users", []))
-    updated = []
+    users = manager._users
+    updated_users = []
     removed = None
 
     for user in users:
-        if user.get_username() == username and (role is None or user.get_role() == role):
+        if (
+            user.get_username() == username
+            and (role is None or user.get_role() == role)
+        ):
             removed = user
-            continue
-        updated.append(user)
+        else:
+            updated_users.append(user)
 
     if removed is not None:
-        manager._users = updated
+        manager._users = updated_users
         manager._save()
 
     return removed
 
 
-def list_appointments_by_patient(patient_name):
+def list_appointments_by_patient(patient_id):
     manager = AppointmentManager()
-    return manager.get_appointments_by_patient(patient_name)
+    return manager.get_appointments_by_patient(patient_id)
 
 
 def cancel_appointment(appointment_id):
     manager = AppointmentManager()
-    for index, appointment in enumerate(manager._appointments):
+
+    for appointment in manager.get_all_appointments():
         if appointment.get_id() == appointment_id:
-            del manager._appointments[index]
+            manager._appointments.remove(appointment)
             manager._save()
             return True
+
     return False
 
 
 def welcome_screen(manager=None):
-    """Show the login/register menu until the user exits."""
     manager = manager or UserManager()
 
     while True:
-        print("\n=== Hospital Appointment CLI ===")
+        print("\n=== Hospital Management System ===")
         print("1. Login")
-        print("2. Register")
+        print("2. Register as Patient")
         print("3. Exit")
 
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
-            user = login(manager)
+            username = input("Username: ").strip()
+            password = input("Password: ")
+
+            user = manager.login(username, password)
+
             if user:
                 print(f"\nWelcome, {user.get_name()}!")
                 route_to_menu(user)
             else:
-                print("Login failed. Check your username/password and try again.")
+                print("Invalid username or password.")
 
         elif choice == "2":
-            register(manager, role="patient")
+            register_patient(manager)
 
         elif choice == "3":
             print("Goodbye!")
             break
 
         else:
-            print("Invalid option, please choose 1, 2, or 3.")
+            print("Invalid option. Please choose 1, 2, or 3.")
+
+
+def register_patient(manager):
+    print("\n--- Patient Registration ---")
+
+    name = input("Full name: ").strip()
+    username = input("Username: ").strip()
+    password = input("Password: ")
+
+    if not name or not username or not password:
+        print("All fields are required.")
+        return None
+
+    patient = manager.register(
+        name,
+        username,
+        password,
+        "patient",
+    )
+
+    if patient:
+        print(
+            f"Patient registered successfully. "
+            f"Your patient ID is {patient.get_id()}."
+        )
+
+    return patient
 
 
 def route_to_menu(user):
-    """Send a logged-in user to the menu for their role."""
-    if user.role == "admin":
+    if user.get_role() == "admin":
         admin_menu(user)
-    elif user.role == "doctor":
+    elif user.get_role() == "doctor":
         doctor_menu(user)
-    elif user.role == "patient":
+    elif user.get_role() == "patient":
         patient_menu(user)
     else:
-        print(f"Unknown role '{user.role}' — cannot open a menu.")
+        print("Unknown user role.")
 
 
-# ADMIN MENU
-
-@role_required("admin")
+@admin_required
 def admin_menu(user):
     manager = UserManager()
 
     while True:
         print("\n--- Admin Menu ---")
-        print("1. Add Doctor")
-        print("2. Remove Doctor")
-        print("3. View All Appointments")
-        print("4. View All Patients")
+        print("1. Register Doctor")
+        print("2. View Doctors")
+        print("3. View Patients")
+        print("4. View All Appointments")
         print("5. Logout")
 
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
-            new_doctor = register(manager, role="doctor")
-            if new_doctor:
-                print(f"Doctor {new_doctor.get_name()} was added successfully.")
+            print("\n--- Register Doctor ---")
+
+            name = input("Doctor name: ").strip()
+            username = input("Username: ").strip()
+            password = input("Password: ")
+
+            print(
+                "Available specialities:",
+                ", ".join([
+                    "General",
+                    "Cardiology",
+                    "Dermatology",
+                    "Pediatrics",
+                    "Dentistry",
+                    "Orthopedics",
+                ])
+            )
+
+            speciality = input("Speciality: ").strip()
+
+            doctor = manager.register(
+                name,
+                username,
+                password,
+                "doctor",
+                speciality,
+            )
+
+            if doctor:
+                print(
+                    f"Doctor registered successfully. "
+                    f"Doctor ID: {doctor.get_id()}"
+                )
+
         elif choice == "2":
-            username = input("Doctor username to remove: ").strip()
-            removed = remove_user_by_username(manager, username, role="doctor")
-            if removed:
-                print(f"Removed doctor: {removed.get_name()} ({removed.get_username()})")
+            doctors = manager.get_all_doctors()
+
+            if not doctors:
+                print("No doctors found.")
             else:
-                print("No doctor found with that username.")
+                print("\n--- Doctors ---")
+
+                for doctor in doctors:
+                    print(
+                        f"ID: {doctor.get_id()} | "
+                        f"Name: {doctor.get_name()} | "
+                        f"Username: {doctor.get_username()} | "
+                        f"Speciality: {doctor.get_speciality()}"
+                    )
+
         elif choice == "3":
-            appointments = AppointmentManager().get_all_appointments()
-            if not appointments:
-                print("No appointments found.")
-            else:
-                for appointment in appointments:
-                    print(appointment)
-        elif choice == "4":
             patients = list_users_by_role(manager, "patient")
+
             if not patients:
                 print("No patients found.")
             else:
+                print("\n--- Patients ---")
+
                 for patient in patients:
-                    print(f"{patient.get_id()} | {patient.get_name()} | {patient.get_username()}")
+                    print(
+                        f"ID: {patient.get_id()} | "
+                        f"Name: {patient.get_name()} | "
+                        f"Username: {patient.get_username()}"
+                    )
+
+        elif choice == "4":
+            appointment_manager = AppointmentManager()
+            appointments = appointment_manager.get_all_appointments()
+
+            if not appointments:
+                print("No appointments found.")
+            else:
+                print("\n--- All Appointments ---")
+
+                for appointment in appointments:
+                    print(appointment)
+
         elif choice == "5":
             print("Logging out...")
             break
+
         else:
-            print("Invalid option, try again.")
+            print("Invalid option. Please try again.")
 
 
-# DOCTOR MENU
-
-@role_required("doctor")
+@login_required
 def doctor_menu(user):
+    if user.get_role() != "doctor":
+        print("Doctor access required.")
+        return
+
     appointment_manager = AppointmentManager()
 
     while True:
         print("\n--- Doctor Menu ---")
-        print("1. View My Schedule")
-        print("2. Set Availability")
-        print("3. Mark Appointment Completed / No-show")
+        print("1. View My Appointments")
+        print("2. View My Patients")
+        print("3. Mark Appointment as Attended")
         print("4. Logout")
 
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
-            appointments = appointment_manager.get_appointments_by_doctor(user.get_name())
+            appointments = appointment_manager.get_appointments_by_doctor(
+                user.get_id()
+            )
+
             if not appointments:
-                print("You have no scheduled appointments.")
+                print("You have no appointments.")
             else:
                 for appointment in appointments:
                     print(appointment)
+
         elif choice == "2":
-            print("Availability is managed by appointment slots in this system.")
-            print("Your current booked appointments are:")
-            for appointment in appointment_manager.get_appointments_by_doctor(user.get_name()):
-                print(appointment)
-        elif choice == "3":
-            appointments = appointment_manager.get_appointments_by_doctor(user.get_name())
+            appointments = appointment_manager.get_appointments_by_doctor(
+                user.get_id()
+            )
+
             if not appointments:
-                print("No appointments to update.")
+                print("You have no patients.")
             else:
-                for appointment in appointments:
-                    print(f"{appointment.get_id()} | {appointment.get_status()}")
-                appointment_id = input("Enter appointment ID to mark as attended: ").strip()
-                if appointment_manager.mark_attended(appointment_id):
-                    print(f"Appointment {appointment_id} marked as attended.")
+                user_manager = UserManager()
+
+                patient_ids = {
+                    appointment.get_patient_id()
+                    for appointment in appointments
+                }
+
+                for patient in user_manager._users:
+                    if (
+                        patient.get_id() in patient_ids
+                        and patient.get_role() == "patient"
+                    ):
+                        print(
+                            f"ID: {patient.get_id()} | "
+                            f"Name: {patient.get_name()} | "
+                            f"Username: {patient.get_username()}"
+                        )
+
+        elif choice == "3":
+            appointments = appointment_manager.get_appointments_by_doctor(
+                user.get_id()
+            )
+
+            if not appointments:
+                print("You have no appointments.")
+                continue
+
+            for appointment in appointments:
+                print(
+                    f"{appointment.get_id()} | "
+                    f"Status: {appointment.get_status()}"
+                )
+
+            appointment_id = input(
+                "Enter appointment ID to mark as attended: "
+            ).strip()
+
+            appointment = None
+
+            for item in appointments:
+                if item.get_id() == appointment_id:
+                    appointment = item
+                    break
+
+            if appointment is None:
+                print("Appointment not found.")
+                continue
+
+            if appointment_manager.mark_attended(appointment_id):
+                print(
+                    f"Appointment {appointment_id} "
+                    "marked as attended."
+                )
+
         elif choice == "4":
             print("Logging out...")
             break
+
         else:
-            print("Invalid option, try again.")
+            print("Invalid option. Please try again.")
 
 
-# PATIENT MENU
-
-@role_required("patient")
+@login_required
 def patient_menu(user):
+    if user.get_role() != "patient":
+        print("Patient access required.")
+        return
+
+    appointment_manager = AppointmentManager()
+    user_manager = UserManager()
+
     while True:
         print("\n--- Patient Menu ---")
-        print("1. Search Doctors by Specialty")
-        print("2. Book Appointment")
-        print("3. Cancel / Reschedule Appointment")
-        print("4. View My Appointment History")
-        print("5. Logout")
+        print("1. View Doctors")
+        print("2. Search Doctors by Speciality")
+        print("3. Book Appointment")
+        print("4. View My Appointments")
+        print("5. Cancel Appointment")
+        print("6. Logout")
 
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
+            doctors = user_manager.get_all_doctors()
+
+            if not doctors:
+                print("No doctors available.")
+            else:
+                for doctor in doctors:
+                    print(
+                        f"ID: {doctor.get_id()} | "
+                        f"Name: {doctor.get_name()} | "
+                        f"Speciality: {doctor.get_speciality()}"
+                    )
+
+        elif choice == "2":
             speciality = input("Enter speciality: ").strip()
-            doctors = UserManager().get_doctors_by_speciality(speciality)
+
+            doctors = user_manager.get_doctors_by_speciality(
+                speciality
+            )
+
             if not doctors:
                 print("No doctors found for that speciality.")
             else:
                 for doctor in doctors:
-                    print(f"{doctor.get_name()} | {doctor.get_username()} | {doctor.get_speciality()}")
-        elif choice == "2":
+                    print(
+                        f"ID: {doctor.get_id()} | "
+                        f"Name: {doctor.get_name()} | "
+                        f"Speciality: {doctor.get_speciality()}"
+                    )
+
+        elif choice == "3":
             speciality = input("Doctor speciality: ").strip()
-            doctors = UserManager().get_doctors_by_speciality(speciality)
+
+            doctors = user_manager.get_doctors_by_speciality(
+                speciality
+            )
+
             if not doctors:
                 print("No doctors available for that speciality.")
                 continue
 
-            print("Available doctors:")
             for doctor in doctors:
-                print(f"{doctor.get_name()} | {doctor.get_username()}")
+                print(
+                    f"ID: {doctor.get_id()} | "
+                    f"Name: {doctor.get_name()} | "
+                    f"Speciality: {doctor.get_speciality()}"
+                )
 
-            doctor_username = input("Choose doctor username: ").strip()
-            doctor = UserManager().find_by_username(doctor_username)
-            if doctor is None or doctor.get_role() != "doctor":
+            doctor_id = input("Enter doctor ID: ").strip()
+
+            doctor = None
+
+            for item in doctors:
+                if item.get_id() == doctor_id:
+                    doctor = item
+                    break
+
+            if doctor is None:
                 print("Doctor not found.")
                 continue
 
             day = input("Appointment day: ").strip()
-            period = input("Period (morning/afternoon/evening): ").strip().lower()
-            appointment = AppointmentManager().book_appointment(
-                user.get_name(), doctor.get_name(), speciality, day, period
+
+            period = input(
+                "Period (morning/afternoon/evening): "
+            ).strip().lower()
+
+            appointment = appointment_manager.book_appointment(
+                user.get_id(),
+                doctor.get_id(),
+                speciality,
+                day,
+                period,
             )
+
             if appointment:
-                print(f"Appointment booked: {appointment}")
-        elif choice == "3":
-            appointments = list_appointments_by_patient(user.get_name())
+                print("\nAppointment booked successfully!")
+                print(appointment)
+
+        elif choice == "4":
+            appointments = appointment_manager.get_appointments_by_patient(
+                user.get_id()
+            )
+
+            if not appointments:
+                print("You have no appointments.")
+            else:
+                for appointment in appointments:
+                    print(appointment)
+
+        elif choice == "5":
+            appointments = appointment_manager.get_appointments_by_patient(
+                user.get_id()
+            )
+
             if not appointments:
                 print("You have no appointments to cancel.")
                 continue
 
             for appointment in appointments:
-                print(f"{appointment.get_id()} | {appointment}")
+                print(appointment)
 
-            appointment_id = input("Enter appointment ID to cancel: ").strip()
-            if cancel_appointment(appointment_id):
-                print(f"Appointment {appointment_id} cancelled.")
-            else:
+            appointment_id = input(
+                "Enter appointment ID to cancel: "
+            ).strip()
+
+            appointment = None
+
+            for item in appointments:
+                if item.get_id() == appointment_id:
+                    appointment = item
+                    break
+
+            if appointment is None:
                 print("Appointment not found.")
-        elif choice == "4":
-            appointments = list_appointments_by_patient(user.get_name())
-            if not appointments:
-                print("You have no appointment history.")
-            else:
-                for appointment in appointments:
-                    print(appointment)
-        elif choice == "5":
+                continue
+
+            if cancel_appointment(appointment_id):
+                print(
+                    f"Appointment {appointment_id} "
+                    "cancelled successfully."
+                )
+
+        elif choice == "6":
             print("Logging out...")
             break
+
         else:
-            print("Invalid option, try again.")
+            print("Invalid option. Please try again.")
 
-
-# ENTRY POINT
 
 if __name__ == "__main__":
     try:
         welcome_screen()
     except KeyboardInterrupt:
         print("\nGoodbye!")
+```
