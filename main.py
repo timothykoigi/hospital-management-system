@@ -1,4 +1,3 @@
-```python
 from models.appointment import AppointmentManager
 from models.user import UserManager
 from utils.decorators import login_required, admin_required
@@ -114,10 +113,13 @@ def register_patient(manager):
 def route_to_menu(user):
     if user.get_role() == "admin":
         admin_menu(user)
+
     elif user.get_role() == "doctor":
         doctor_menu(user)
+
     elif user.get_role() == "patient":
         patient_menu(user)
+
     else:
         print("Unknown user role.")
 
@@ -176,6 +178,7 @@ def admin_menu(user):
 
             if not doctors:
                 print("No doctors found.")
+
             else:
                 print("\n--- Doctors ---")
 
@@ -192,6 +195,7 @@ def admin_menu(user):
 
             if not patients:
                 print("No patients found.")
+
             else:
                 print("\n--- Patients ---")
 
@@ -208,6 +212,7 @@ def admin_menu(user):
 
             if not appointments:
                 print("No appointments found.")
+
             else:
                 print("\n--- All Appointments ---")
 
@@ -246,6 +251,7 @@ def doctor_menu(user):
 
             if not appointments:
                 print("You have no appointments.")
+
             else:
                 for appointment in appointments:
                     print(appointment)
@@ -257,6 +263,7 @@ def doctor_menu(user):
 
             if not appointments:
                 print("You have no patients.")
+
             else:
                 user_manager = UserManager()
 
@@ -345,6 +352,7 @@ def patient_menu(user):
 
             if not doctors:
                 print("No doctors available.")
+
             else:
                 for doctor in doctors:
                     print(
@@ -354,7 +362,9 @@ def patient_menu(user):
                     )
 
         elif choice == "2":
-            speciality = input("Enter speciality: ").strip()
+            speciality = input(
+                "Enter speciality: "
+            ).strip()
 
             doctors = user_manager.get_doctors_by_speciality(
                 speciality
@@ -362,6 +372,7 @@ def patient_menu(user):
 
             if not doctors:
                 print("No doctors found for that speciality.")
+
             else:
                 for doctor in doctors:
                     print(
@@ -371,7 +382,9 @@ def patient_menu(user):
                     )
 
         elif choice == "3":
-            speciality = input("Doctor speciality: ").strip()
+            speciality = input(
+                "Doctor speciality: "
+            ).strip()
 
             doctors = user_manager.get_doctors_by_speciality(
                 speciality
@@ -388,7 +401,9 @@ def patient_menu(user):
                     f"Speciality: {doctor.get_speciality()}"
                 )
 
-            doctor_id = input("Enter doctor ID: ").strip()
+            doctor_id = input(
+                "Enter doctor ID: "
+            ).strip()
 
             doctor = None
 
@@ -401,7 +416,9 @@ def patient_menu(user):
                 print("Doctor not found.")
                 continue
 
-            day = input("Appointment day: ").strip()
+            day = input(
+                "Appointment day: "
+            ).strip()
 
             period = input(
                 "Period (morning/afternoon/evening): "
@@ -426,6 +443,7 @@ def patient_menu(user):
 
             if not appointments:
                 print("You have no appointments.")
+
             else:
                 for appointment in appointments:
                     print(appointment)
@@ -476,4 +494,3 @@ if __name__ == "__main__":
         welcome_screen()
     except KeyboardInterrupt:
         print("\nGoodbye!")
-```
