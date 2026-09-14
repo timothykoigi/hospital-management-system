@@ -13,15 +13,7 @@ SPECIALITIES = [
 
 
 class User:
-    def __init__(
-        self,
-        user_id,
-        name,
-        username,
-        password,
-        role,
-        password_is_hashed=False,
-    ):
+    def __init__(self,user_id,name,username,password,role,password_is_hashed=False):
         self._user_id = user_id
         self._name = name
         self._username = username
@@ -56,10 +48,7 @@ class User:
         return self._role
 
     def check_password(self, attempt):
-        return bcrypt.checkpw(
-            attempt.encode("utf-8"),
-            self._password.encode("utf-8")
-        )
+        return bcrypt.checkpw(attempt.encode("utf-8"),self._password.encode("utf-8"))
 
     def to_dict(self):
         return {
@@ -72,42 +61,14 @@ class User:
 
 
 class Patient(User):
-    def __init__(
-        self,
-        user_id,
-        name,
-        username,
-        password,
-        password_is_hashed=False,
-    ):
-        super().__init__(
-            user_id,
-            name,
-            username,
-            password,
-            role="patient",
-            password_is_hashed=password_is_hashed,
-        )
+    def __init__(self,user_id,name,username,password,password_is_hashed=False,):
+        super().__init__(user_id,name,username,password,role="patient",password_is_hashed=password_is_hashed,)
 
 
 class Doctor(User):
-    def __init__(
-        self,
-        user_id,
-        name,
-        username,
-        password,
-        speciality,
-        password_is_hashed=False,
-    ):
-        super().__init__(
-            user_id,
-            name,
-            username,
-            password,
-            role="doctor",
-            password_is_hashed=password_is_hashed,
-        )
+    def __init__(self,user_id,name,username,password,speciality,password_is_hashed=False,):
+        super().__init__(user_id,name,username,password,role="doctor",password_is_hashed=password_is_hashed,)
+
         self._speciality = speciality
 
     def get_speciality(self):
@@ -120,22 +81,11 @@ class Doctor(User):
 
 
 class Admin(User):
-    def __init__(
-        self,
-        user_id,
-        name,
-        username,
-        password,
-        password_is_hashed=False,
-    ):
-        super().__init__(
-            user_id,
-            name,
-            username,
-            password,
-            role="admin",
-            password_is_hashed=password_is_hashed,
-        )
+    def __init__(self,user_id,name,username,password,password_is_hashed=False,):
+        super().__init__(user_id,name,username,password,role="admin",password_is_hashed=password_is_hashed,)
+
+
+
 
 
 class UserManager:
@@ -192,6 +142,7 @@ class UserManager:
         with open(self._filename, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
 
+
     def _generate_id(self, role):
         prefix = {
             "patient": "P",
@@ -199,61 +150,18 @@ class UserManager:
             "admin": "A",
         }[role]
 
-        count = len(
-            [user for user in self._users if user.get_role() == role]
-        )
-
+        count = len([user for user in self._users if user.get_role() == role])
         return prefix + str(count + 1)
+    
 
     def _create_demo_users(self):
-        self._users.append(
-            Doctor(
-                self._generate_id("doctor"),
-                "Dr. Alice Smith",
-                "asmith",
-                "doc123",
-                "Cardiology",
-            )
-        )
-
-        self._users.append(
-            Doctor(
-                self._generate_id("doctor"),
-                "Dr. Ben Otieno",
-                "botieno",
-                "doc123",
-                "Dentistry",
-            )
-        )
-
-        self._users.append(
-            Patient(
-                self._generate_id("patient"),
-                "Jane Doe",
-                "jdoe",
-                "pat123",
-            )
-        )
-
-        self._users.append(
-            Admin(
-                self._generate_id("admin"),
-                "System Admin",
-                "admin",
-                "admin123",
-            )
-        )
+        self._users.append(Doctor(self._generate_id("doctor"),"Dr. Ben Otieno","botieno","doc123","Dentistry"))
+        self._users.append(Patient(self._generate_id("patient"),"Jane Doe","jdoe","pat123"))
+        self._users.append(Admin(self._generate_id("admin"),"System Admin","admin","admin123"))
 
         self._save()
 
-    def register(
-        self,
-        name,
-        username,
-        password,
-        role,
-        speciality=None,
-    ):
+    def register(self,name,username,password,role,speciality=None,):
         if self.find_by_username(username) is not None:
             print("That username is already taken.")
             return None
@@ -262,67 +170,33 @@ class UserManager:
 
         if role == "doctor":
             if speciality not in SPECIALITIES:
-                print(
-                    "That speciality does not exist. "
-                    "Choose from:",
-                    SPECIALITIES,
-                )
+                print("That speciality does not exist. ")
                 return None
-
-            new_user = Doctor(
-                user_id,
-                name,
-                username,
-                password,
-                speciality,
-            )
-
+            new_user = Doctor(user_id,name,username,password,speciality)
         elif role == "admin":
-            new_user = Admin(
-                user_id,
-                name,
-                username,
-                password,
-            )
-
+            new_user = Admin(user_id,name,username,password)
         else:
-            new_user = Patient(
-                user_id,
-                name,
-                username,
-                password,
-            )
+            new_user = Patient(user_id,name,username,password)
 
         self._users.append(new_user)
         self._save()
-
         return new_user
 
     def login(self, username, password):
         user = self.find_by_username(username)
-
         if user is not None and user.check_password(password):
             return user
-
         return None
+
 
     def find_by_username(self, username):
         for user in self._users:
             if user.get_username() == username:
                 return user
-
         return None
 
     def get_all_doctors(self):
-        return [
-            user
-            for user in self._users
-            if user.get_role() == "doctor"
-        ]
+        return [user for user in self._users if user.get_role() == "doctor"]
 
     def get_doctors_by_speciality(self, speciality):
-        return [
-            user
-            for user in self.get_all_doctors()
-            if user.get_speciality() == speciality
-        ]
+        return [user for user in self.get_all_doctors() if user.get_speciality() == speciality]
