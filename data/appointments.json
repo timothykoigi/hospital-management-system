@@ -1,1 +1,11 @@
-[]
+[
+    {
+        "appointment_id": "A1",
+        "patient_name": "Jane Patient",
+        "doctor_name": "Dr. Alice",
+        "speciality": "Cardiology",
+        "day": "Monday",
+        "period": "morning",
+        "status": "waiting"
+    }
+]

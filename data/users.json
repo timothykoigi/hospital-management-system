@@ -1,5 +1,60 @@
 {
-    "admins": [],
-    "doctors": [],
-    "patients": []
+    "admins": [
+        {
+            "user_id": "A1",
+            "name": "System Admin",
+            "username": "admin",
+            "password": "admin123",
+            "role": "admin"
+        }
+    ],
+    "doctors": [
+        {
+            "user_id": "D1",
+            "name": "Dr. Alice Smith",
+            "username": "asmith",
+            "password": "doc123",
+            "role": "doctor",
+            "speciality": "Cardiology"
+        },
+        {
+            "user_id": "D2",
+            "name": "Dr. Ben Otieno",
+            "username": "botieno",
+            "password": "doc123",
+            "role": "doctor",
+            "speciality": "Dentistry"
+        },
+        {
+            "user_id": "D3",
+            "name": "Dr. Alice",
+            "username": "doctor1",
+            "password": "doc123",
+            "role": "doctor",
+            "speciality": "Cardiology"
+        }
+    ],
+    "patients": [
+        {
+            "user_id": "P1",
+            "name": "Jane Doe",
+            "username": "jdoe",
+            "password": "pat123",
+            "role": "patient"
+        },
+        {
+            "user_id": "P2",
+            "name": "Jane Patient",
+            "username": "patient1",
+            "password": "pat123",
+            "role": "patient"
+        },
+        {
+            "user_id": "P3",
+            "name": "bravin nerville",
+            "username": "nerville",
+            "password": "Nerville@2006",
+            "role": "patient"
+        }
+    ]
 }
