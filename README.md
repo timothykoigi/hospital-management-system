@@ -1,8 +1,8 @@
 # Hospital Management System
 
-A Python 3 command-line Hospital Management System built using **Object-Oriented Programming (OOP)**, **JSON storage**, **authentication**, **password hashing**, **input validation**, and **Pytest**.
+A Python 3 command-line Hospital Management System built using **Object-Oriented Programming (OOP)**, **JSON storage**, **authentication**, **password hashing**, **input validation**, **role-based access control**, and **Pytest**.
 
-The system allows administrators, doctors, and patients to manage basic hospital information and appointments.
+The system allows administrators, doctors, and patients to manage basic hospital information and appointments through a command-line interface.
 
 ---
 
@@ -10,9 +10,13 @@ The system allows administrators, doctors, and patients to manage basic hospital
 
 * User authentication and login
 * Role-based access for Admins, Doctors, and Patients
-* Patient registration and management
-* Doctor registration and management
-* Appointment creation and management
+* Patient registration
+* Doctor registration
+* View doctors and patients
+* Search doctors by speciality
+* Appointment booking
+* Appointment cancellation
+* Appointment status management
 * Password hashing with bcrypt
 * Input validation
 * JSON-based data storage
@@ -25,29 +29,42 @@ The system allows administrators, doctors, and patients to manage basic hospital
 
 ### Admin
 
+Admins can:
+
 * Register doctors
-* Register patients
 * View doctors
 * View patients
-* View appointments
+* View all appointments
+* Logout
 
 ### Doctor
 
-* View appointments
-* View patients
+Doctors can:
+
+* View their appointments
+* View their patients
+* Mark appointments as attended
+* Logout
 
 ### Patient
 
-* View profile
-* View appointments
+Patients can:
+
+* Register an account
+* View available doctors
+* Search doctors by speciality
+* Book appointments
+* View their appointments
+* Cancel appointments
+* Logout
 
 ---
 
 ## Technology Stack
 
 * **Python 3** — Application development
-* **OOP** — Application structure
-* **JSON** — Data storage
+* **OOP** — Application structure and object-oriented design
+* **JSON** — Local data storage
 * **bcrypt** — Password hashing
 * **Pytest** — Automated testing
 * **Git/GitHub** — Version control
@@ -63,16 +80,13 @@ hospital-management-system/
 │
 ├── models/
 │   ├── __init__.py
-│   ├── patient.py
-│   ├── doctor.py
-│   ├── admin.py
+│   ├── user.py
 │   └── appointment.py
 │
 ├── utils/
 │   ├── __init__.py
 │   ├── auth.py
 │   ├── storage.py
-│   ├── validators.py
 │   └── decorators.py
 │
 ├── data/
@@ -97,45 +111,68 @@ hospital-management-system/
 
 ## Data Storage
 
-The application uses JSON files instead of a relational database.
+The application uses JSON files for local data storage instead of a relational database.
 
 ### `users.json`
 
-Stores:
+The `users.json` file stores users with their roles.
+
+Users can be:
 
 * Admins
 * Doctors
 * Patients
 
+Example structure:
+
 ```json
-{
-    "admins": [],
-    "doctors": [],
-    "patients": []
-}
+[
+    {
+        "user_id": "D1",
+        "name": "Dr. Alice Smith",
+        "username": "asmith",
+        "password": "hashed_password",
+        "role": "doctor",
+        "speciality": "Cardiology"
+    }
+]
 ```
+
+Passwords are stored as bcrypt hashes rather than plain-text passwords.
 
 ### `appointments.json`
 
-Stores hospital appointments.
+Appointments are stored as a JSON list.
+
+Example structure:
 
 ```json
-{
-    "appointments": []
-}
+[
+    {
+        "appointment_id": "A1",
+        "patient_id": "P1",
+        "doctor_id": "D1",
+        "speciality": "Cardiology",
+        "day": "Monday",
+        "period": "morning",
+        "status": "waiting"
+    }
+]
 ```
 
-Appointments connect patients and doctors using their IDs.
+Appointments connect patients and doctors using their unique IDs.
+
+Example relationship:
 
 ```text
-Patient P001
-     ↓
-Appointment AP001
-     ↓
-Doctor D001
+Patient P1
+    ↓
+Appointment A1
+    ↓
+Doctor D1
 ```
 
-When data is added or updated through the application, the corresponding JSON file is automatically updated.
+When data is added, updated, or removed through the application, the corresponding JSON file is updated automatically.
 
 ---
 
@@ -148,50 +185,66 @@ Username + Password
         ↓
 Authentication
         ↓
-Verify Password
+Password Verification
         ↓
-Identify Role
+Identify User Role
         ↓
 Display Role Menu
 ```
 
-Passwords are hashed using **bcrypt** and are not stored as plain text.
+Passwords are hashed using **bcrypt** and are not stored as plain-text passwords.
+
+The project also uses decorators for access control:
+
+* `login_required` — restricts functionality to logged-in users
+* `admin_required` — restricts functionality to administrators
 
 ---
 
 ## OOP Concepts
 
-The project demonstrates:
+The project demonstrates several Object-Oriented Programming concepts:
 
 * Classes and objects
 * Encapsulation
+* Inheritance
 * Object relationships
-* Inheritance where appropriate
 * Static methods
+* Class methods
+* Properties
 * Modular Python programming
 
-The main models are:
+The main user classes are:
 
 ```text
-Patient
-Doctor
-Admin
+User
+├── Admin
+├── Doctor
+└── Patient
+```
+
+The project also contains an:
+
+```text
 Appointment
 ```
+
+class for managing hospital appointments.
 
 ---
 
 ## Validation & Testing
 
-User input is validated before data is stored.
+The application validates user input before saving data.
 
-Examples include:
+Examples of validation include:
 
-* Required fields
-* Valid ages
+* Required registration fields
 * Unique usernames
-* Valid phone numbers
+* Valid doctor specialities
+* Valid appointment periods
 * Valid appointment information
+* User role restrictions
 
 Automated tests are written using **Pytest**.
 
@@ -201,6 +254,15 @@ Run the tests with:
 pytest
 ```
 
+The project currently contains tests covering:
+
+* Admin functionality
+* Doctor functionality
+* Patient functionality
+* Authentication
+* Appointment management
+* Access-control decorators
+
 ---
 
 ## Installation
@@ -209,6 +271,7 @@ Clone the repository and enter the project directory:
 
 ```bash
 git clone git@github.com:YOUR_USERNAME/hospital-management-system.git
+
 cd hospital-management-system
 ```
 
@@ -218,7 +281,7 @@ Create a virtual environment:
 python3 -m venv venv
 ```
 
-Activate it:
+Activate the virtual environment:
 
 ```bash
 source venv/bin/activate
@@ -240,7 +303,53 @@ Start the application with:
 python3 main.py
 ```
 
-The application provides a command-line interface for authentication and hospital management.
+The main menu provides:
+
+```text
+=== Hospital Management System ===
+
+1. Login
+2. Register as Patient
+3. Exit
+```
+
+After login, the system identifies the user's role and displays the appropriate menu.
+
+---
+
+## Demo Accounts
+
+The application automatically creates demo users when the user data file is empty.
+
+### Admin
+
+```text
+Username: admin
+Password: admin123
+```
+
+### Doctor
+
+```text
+Username: asmith
+Password: doc123
+```
+
+### Doctor
+
+```text
+Username: botieno
+Password: doc123
+```
+
+### Patient
+
+```text
+Username: jdoe
+Password: pat123
+```
+
+These accounts are intended for demonstration and testing purposes.
 
 ---
 
@@ -248,43 +357,55 @@ The application provides a command-line interface for authentication and hospita
 
 ```text
 Python 3
-   ↓
+    ↓
 OOP Models
-   ↓
+    ↓
 Application Logic
-   ↓
+    ↓
 Authentication + Validation
-   ↓
+    ↓
+Role-Based Access
+    ↓
 JSON Storage
-   ↓
+    ↓
 users.json / appointments.json
-   ↓
+    ↓
 Pytest
 ```
 
-User flow:
+### User Flow
 
 ```text
 User
- ↓
-Login
- ↓
+  ↓
+Login / Patient Registration
+  ↓
 Authentication
- ↓
+  ↓
 Role Identification
- ↓
+  ↓
 Admin / Doctor / Patient Menu
- ↓
+  ↓
 Hospital Operations
- ↓
-JSON Data
+  ↓
+JSON Data Storage
 ```
 
 ---
 
 ## Current Scope
 
-The current version focuses on Python, OOP, JSON storage, authentication, validation, and testing.
+The current version focuses on:
+
+* Python 3
+* Object-Oriented Programming
+* JSON storage
+* Authentication
+* bcrypt password hashing
+* Role-based access control
+* Input validation
+* Appointment management
+* Automated testing with Pytest
 
 The project does **not** currently use:
 
@@ -294,8 +415,9 @@ The project does **not** currently use:
 * PostgreSQL
 * REST APIs
 * Payment integration
+* Email or SMS services
 
-These may be considered for future versions.
+These technologies may be considered for future versions.
 
 ---
 
@@ -308,28 +430,66 @@ Possible future additions include:
 * Medications
 * Billing
 * Nurses and receptionists
-* MySQL/PostgreSQL
+* MySQL/PostgreSQL database
 * Flask REST API
 * React frontend
 * Online deployment
+* Email/SMS notifications
+* More advanced appointment scheduling
 
 ---
 
 ## Git Workflow
 
+Git and GitHub are used for version control and collaboration.
+
+Common Git commands:
+
 ```bash
 git status
 git add .
 git commit -m "Describe your changes"
-git push
+git push origin main
 ```
 
-Git and GitHub are used to track development and collaborate on the project.
+The repository is hosted on GitHub.
+
+---
+
+## Testing
+
+Run the complete test suite with:
+
+```bash
+pytest
+```
+
+The current test suite covers:
+
+```text
+Admin
+Doctor
+Patient
+Authentication
+Appointments
+Decorators
+```
 
 ---
 
 ## Security Notice
 
-This is an educational project using local JSON storage. It should not be used to store real patient or medical information.
+This is an educational project using local JSON storage.
 
-A production system would require stronger security, a secure database, access controls, encryption, auditing, backups, and appropriate healthcare data protection measures.
+It should **not** be used to store real patient or medical information.
+
+A production hospital management system would require stronger security measures, including:
+
+* Secure database infrastructure
+* Strong access controls
+* Encryption
+* Audit logging
+* Secure backups
+* Monitoring
+* Data privacy controls
+* Appropriate healthcare data protection measures
