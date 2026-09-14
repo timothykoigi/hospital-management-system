@@ -108,6 +108,21 @@ class UserManager:
         if not self._users:
             self._create_demo_users()
 
+    def _deserialize_user(self, item):
+        """Build a User object from a JSON record, compatible with both list and dict storage."""
+        role = item.get("role")
+        if role == "doctor":
+            return Doctor(
+                item["user_id"],
+                item["name"],
+                item["username"],
+                item["password"],
+                item["speciality"],
+            )
+        if role == "admin":
+            return Admin(item["user_id"], item["name"], item["username"], item["password"])
+        return Patient(item["user_id"], item["name"], item["username"], item["password"])
+
     def _load(self):
         """Reads users from the JSON file, if it exists."""
         if os.path.exists(self._filename):
