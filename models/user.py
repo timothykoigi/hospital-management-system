@@ -85,12 +85,9 @@ class Admin(User):
         super().__init__(user_id,name,username,password,role="admin",password_is_hashed=password_is_hashed,)
 
 
-
-
-
 class UserManager:
-    def __init__(self, filename="data/users.json"):
-        self._filename = filename
+    def __init__(self):
+        self._filename = "data/users.json"
         self._users = []
         self._load()
 
