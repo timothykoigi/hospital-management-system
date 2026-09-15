@@ -2,6 +2,7 @@ import bcrypt
 import json
 import os
 
+
 SPECIALITIES = [
     "General",
     "Cardiology",
@@ -11,7 +12,9 @@ SPECIALITIES = [
     "Orthopedics",
 ]
 
-
+"""
+User model 
+"""
 class User:
     def __init__(self,user_id,name,username,password,role,password_is_hashed=False):
         self._user_id = user_id
@@ -31,18 +34,6 @@ class User:
             bcrypt.gensalt()
         ).decode("utf-8")
 
-    def get_id(self):
-        return self._user_id
-
-    def get_name(self):
-        return self._name
-
-    def get_username(self):
-        return self._username
-
-    def get_role(self):
-        return self._role
-
     @property
     def role(self):
         return self._role
@@ -59,11 +50,17 @@ class User:
             "role": self._role,
         }
 
+"""
+Model for the Patient
+"""
 
 class Patient(User):
     def __init__(self,user_id,name,username,password,password_is_hashed=False,):
         super().__init__(user_id,name,username,password,role="patient",password_is_hashed=password_is_hashed,)
 
+"""
+Model for the Doctor
+"""
 
 class Doctor(User):
     def __init__(self,user_id,name,username,password,speciality,password_is_hashed=False,):
@@ -80,14 +77,20 @@ class Doctor(User):
         return data
 
 
+"""
+Model for the Admin
+"""
 class Admin(User):
     def __init__(self,user_id,name,username,password,password_is_hashed=False,):
         super().__init__(user_id,name,username,password,role="admin",password_is_hashed=password_is_hashed,)
 
 
-
-
-
+"""
+Model for the Managing users
+>> Login
+>> Register
+>> Load and save Json Data
+"""
 class UserManager:
     def __init__(self, filename="data/users.json"):
         self._filename = filename
@@ -97,6 +100,9 @@ class UserManager:
         if not self._users:
             self._create_demo_users()
 
+    """
+    Method to load data from the Json
+    """
     def _load(self):
         if os.path.exists(self._filename):
             with open(self._filename, "r", encoding="utf-8") as file:
@@ -152,14 +158,10 @@ class UserManager:
 
         count = len([user for user in self._users if user.get_role() == role])
         return prefix + str(count + 1)
-    
 
-    def _create_demo_users(self):
-        self._users.append(Doctor(self._generate_id("doctor"),"Dr. Ben Otieno","botieno","doc123","Dentistry"))
-        self._users.append(Patient(self._generate_id("patient"),"Jane Doe","jdoe","pat123"))
-        self._users.append(Admin(self._generate_id("admin"),"System Admin","admin","admin123"))
-
-        self._save()
+    """
+    Method to register users
+    """
 
     def register(self,name,username,password,role,speciality=None,):
         if self.find_by_username(username) is not None:
